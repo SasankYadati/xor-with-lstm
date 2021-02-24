@@ -13,12 +13,14 @@ dependencies:
   - libpng=1.6.37=h2a8f88b_0
   - libtiff=4.1.0=h56a325e_1
   - libuv=1.40.0=he774522_0
+  - llvmlite=0.34.0=py38h1a82afc_4
   - lz4-c=1.9.3=h2bbff1b_0
   - mkl=2020.2=256
   - mkl-service=2.3.0=py38h196d8e1_0
   - mkl_fft=1.2.1=py38h46781fe_0
   - mkl_random=1.1.1=py38h47e9c7a_0
   - ninja=1.10.2=py38h6d14046_0
+  - numba=0.51.2=py38hf9181ef_1
   - numpy=1.19.2=py38hadc3359_0
   - numpy-base=1.19.2=py38ha3acd2a_0
   - olefile=0.46=py_0
