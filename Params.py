@@ -3,6 +3,7 @@ class DataParams():
         self.num_samples = num_samples
         self.max_seq_len = max_seq_len
         self.is_seq_len_varying = is_seq_len_varying
+        self.batch_size = min(32, num_samples)
 
     def __str__(self):
         return self.getString()
@@ -11,7 +12,7 @@ class DataParams():
         return self.getString()
 
     def getString(self):
-        return f"No. samples: {self.num_samples}, Max sequence length: {self.max_seq_len}, Variable length sequence: {self.is_seq_len_varying}"
+        return f"No. samples: {self.num_samples}, Max sequence length: {self.max_seq_len}, Variable length sequence: {self.is_seq_len_varying}, Batch size: {self.batch_size}"
 
 class NetworkParams():
     def __init__(self, num_hidden_features=2, num_layers=1):
@@ -28,8 +29,7 @@ class NetworkParams():
         return f"No. hidden features: {self.num_hidden_features}, No. layers: {self.num_layers}"
 
 class TrainingParams():
-    def __init__(self, batch_size=32, lr=0.3):
-        self.batch_size = batch_size
+    def __init__(self, lr=0.001):
         self.lr = lr
 
     def __str__(self):
@@ -39,7 +39,7 @@ class TrainingParams():
         return self.getString()
     
     def getString(self):
-        return f"Batch size: {self.batch_size}, Learning rate: {self.lr}"
+        return f"Learning rate: {self.lr}"
 
 
 class Params():

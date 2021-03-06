@@ -40,10 +40,11 @@ class Model(nn.Module):
         accuracy = is_correct.mean()
         return accuracy
 
-def train_model(model:Model, params:Params, loss):
-    print(f"\nTraining model with\n\n{params}")
-    train_loader = DataLoader(XORDataset(params.data.num_samples, params.data.max_seq_len), batch_size=params.training.batch_size)
-    optimizer = torch.optim.SGD(model.parameters(), lr=params.training.lr)
+def train_model(model:Model, params:Params):
+    print(f"\nSeq len:{params.data.max_seq_len}, Varying seq len:{params.data.is_seq_len_varying}")
+    train_loader = DataLoader(XORDataset(params.data.num_samples, params.data.max_seq_len), batch_size=params.data.batch_size)
+    loss = torch.nn.BCEWithLogitsLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=params.training.lr)
     step = 0
     while True:
         test_accuracy = 0
@@ -61,18 +62,15 @@ def train_model(model:Model, params:Params, loss):
 
             accuracy = ((predictions > 0.5) == (targets > 0.5)).type(torch.FloatTensor).mean()
 
-            if step % 200 == 0:
-                print(f'step {step}, loss {loss_val.item():.{4}f}, accuracy {accuracy:.{4}f}')
-
-            if step % 1000 == 0:
+            if step % 50 == 0:
                 seq_len = params.data.max_seq_len * 2
                 num_seqs = 5000
-                batch_size = params.training.batch_size
+                batch_size = params.data.batch_size
                 test_loader = DataLoader(XORDataset(5000, seq_len), batch_size=batch_size)
                 test_accuracy = model.evaluate(test_loader, params.data.is_seq_len_varying)
-                print(f'test accuracy {test_accuracy:.{4}f}')
                 
-                if test_accuracy == 1.0:
+                if test_accuracy >= 0.98:
+                    print(f'step {step}, loss {loss_val.item():.{4}f}, accuracy {accuracy:.{4}f}, test accuracy {test_accuracy:.{4}f}')
                     return step
 
 if __name__ == '__main__':
@@ -82,8 +80,5 @@ if __name__ == '__main__':
     params2 = Params(data2, network, training)
     model1 = Model(params1.network)
     model2 = Model(params2.network)
-    
-    loss = torch.nn.BCEWithLogitsLoss()
-
     _ = train_model(model1, params1, loss)
     _ = train_model(model2, params2, loss)

@@ -29,7 +29,7 @@ def getVariableLengths(x, y, is_seq_len_varying):
     max_seq_len = x.size()[1]
     if not is_seq_len_varying:
         return torch.ones(batch_size) * max_seq_len
-    lengths = torch.tensor(np.random.randint(1, max_seq_len, size=batch_size))
+    lengths = torch.tensor(np.random.randint(max_seq_len//2, max_seq_len, size=batch_size))
     lengths[-1] = max_seq_len
     for i, length in enumerate(lengths):
         x[i, lengths[i]:,] = 0
