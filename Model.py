@@ -80,5 +80,5 @@ if __name__ == '__main__':
     params2 = Params(data2, network, training)
     model1 = Model(params1.network)
     model2 = Model(params2.network)
-    _ = train_model(model1, params1, loss)
-    _ = train_model(model2, params2, loss)
+    _ = train_model(model1, params1)
+    _ = train_model(model2, params2)
