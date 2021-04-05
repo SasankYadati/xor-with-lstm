@@ -37,8 +37,8 @@ class Model(nn.Module):
         accuracy = is_correct.mean()
         return accuracy
 
-def train_model(model:Model, params:Params, max_steps=50000):
-    print(f"\nSeq len:{params.data.max_seq_len}, Varying seq len:{params.data.is_seq_len_varying}")
+def train_model(model:Model, params:Params, max_steps=50000, verbose=True):
+    verbose and print(f"\nSeq len:{params.data.max_seq_len}, Varying seq len:{params.data.is_seq_len_varying}")
     train_loader = DataLoader(XORDataset(params.data.num_samples, params.data.max_seq_len), batch_size=params.data.batch_size)
     loss = torch.nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=params.training.lr)
@@ -67,7 +67,7 @@ def train_model(model:Model, params:Params, max_steps=50000):
                 test_accuracy = model.evaluate(test_loader, params.data.is_seq_len_varying)
                 
                 if test_accuracy >= 0.98:
-                    print(f'step {step}, loss {loss_val.item():.{4}f}, accuracy {accuracy:.{4}f}, test accuracy {test_accuracy:.{4}f}')
+                    verbose and print(f'step {step}, loss {loss_val.item():.{4}f}, accuracy {accuracy:.{4}f}, test accuracy {test_accuracy:.{4}f}')
                     return step
             
             if step == max_steps:
