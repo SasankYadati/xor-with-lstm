@@ -37,11 +37,12 @@ class Model(nn.Module):
         accuracy = is_correct.mean()
         return accuracy
 
-def train_model(model:Model, params:Params, max_steps=50000, verbose=True):
+def train_model(model:Model, params:Params, max_steps=50000, verbose=True, acc_check_points=[0.70, 0.80, 0.90, 0.95, 0.98]):
     verbose and print(f"\nSeq len:{params.data.max_seq_len}, Varying seq len:{params.data.is_seq_len_varying}")
     train_loader = DataLoader(XORDataset(params.data.num_samples, params.data.max_seq_len), batch_size=params.data.batch_size)
     loss = torch.nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=params.training.lr)
+    steps_for_check_points = {}
     step = 0
     while True:
         test_accuracy = 0
@@ -61,17 +62,24 @@ def train_model(model:Model, params:Params, max_steps=50000, verbose=True):
 
             if step % 100 == 0:
                 seq_len = params.data.max_seq_len * 2
-                num_seqs = 5000
+                num_seqs = 1000
                 batch_size = params.data.batch_size
                 test_loader = DataLoader(XORDataset(num_seqs, seq_len), batch_size=batch_size)
-                test_accuracy = model.evaluate(test_loader, params.data.is_seq_len_varying)
+                test_accuracy = model.evaluate(test_loader, True)
+
+                for acc_ckpt in acc_check_points:
+                    if test_accuracy >= acc_ckpt and acc_ckpt not in steps_for_check_points:
+                        steps_for_check_points[acc_ckpt] = step
                 
                 if test_accuracy >= 0.98:
                     verbose and print(f'step {step}, loss {loss_val.item():.{4}f}, accuracy {accuracy:.{4}f}, test accuracy {test_accuracy:.{4}f}')
-                    return step
+                    return step, steps_for_check_points
             
             if step == max_steps:
-                return step
+                for acc_ckpt in acc_check_points:
+                    if acc_ckpt not in steps_for_check_points:
+                        steps_for_check_points[acc_ckpt] = max_steps
+                return step, steps_for_check_points
 
 if __name__ == '__main__':
     data1, data2 = DataParams(50000, 50, True), DataParams(50000, 50, False)
