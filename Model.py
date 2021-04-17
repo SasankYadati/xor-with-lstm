@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import numpy as np
 from torch.nn.utils import rnn
 from torch.utils.data import DataLoader
 from data_helper import XORDataset, getVariableLengths
@@ -25,23 +24,24 @@ class Model(nn.Module):
         return logits, predictions
     
     def evaluate(self, test_loader, is_seq_len_varying):
-        is_correct = np.array([])
+        is_correct = []
 
         for inputs, targets in test_loader:
             lengths = getVariableLengths(inputs, targets, is_seq_len_varying)
 
             with torch.no_grad():
                 logits, predictions = self.forward(inputs, lengths)
-                is_correct = np.append(is_correct, ((predictions > 0.5) == (targets > 0.5)))
+                is_correct.extend(((predictions > 0.5) == (targets > 0.5)))
+                # is_correct = np.append(is_correct, ((predictions > 0.5) == (targets > 0.5)))
 
-        accuracy = is_correct.mean()
+        accuracy = sum(is_correct)/len(is_correct)
         return accuracy
 
-def train_model(model:Model, params:Params, max_steps=50000, verbose=True, acc_check_points=[0.70, 0.80, 0.90, 0.95, 0.98]):
+def train_model(model:Model, params:Params, test_loader=None, max_steps=10000, verbose=True, acc_check_points=[0.70, 0.80, 0.90, 0.95]):
     verbose and print(f"\nSeq len:{params.data.max_seq_len}, Varying seq len:{params.data.is_seq_len_varying}")
     train_loader = DataLoader(XORDataset(params.data.num_samples, params.data.max_seq_len), batch_size=params.data.batch_size)
     loss = torch.nn.BCEWithLogitsLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=params.training.lr)
+    optimizer = torch.optim.Adam(model.parameters()) # lr=params.training.lr
     steps_for_check_points = {}
     step = 0
     while True:
@@ -60,18 +60,18 @@ def train_model(model:Model, params:Params, max_steps=50000, verbose=True, acc_c
 
             accuracy = ((predictions > 0.5) == (targets > 0.5)).type(torch.FloatTensor).mean()
 
-            if step % 100 == 0:
+            if step % 50 == 0 and accuracy >= acc_check_points[0]:
                 seq_len = params.data.max_seq_len * 2
-                num_seqs = 1000
+                num_seqs = 100
                 batch_size = params.data.batch_size
-                test_loader = DataLoader(XORDataset(num_seqs, seq_len), batch_size=batch_size)
-                test_accuracy = model.evaluate(test_loader, True)
+                test_loader = test_loader if test_loader is not None else DataLoader(XORDataset(num_seqs, seq_len), batch_size=batch_size)
+                test_accuracy = model.evaluate(test_loader, False)
 
                 for acc_ckpt in acc_check_points:
                     if test_accuracy >= acc_ckpt and acc_ckpt not in steps_for_check_points:
                         steps_for_check_points[acc_ckpt] = step
                 
-                if test_accuracy >= 0.98:
+                if test_accuracy >= 0.95:
                     verbose and print(f'step {step}, loss {loss_val.item():.{4}f}, accuracy {accuracy:.{4}f}, test accuracy {test_accuracy:.{4}f}')
                     return step, steps_for_check_points
             
