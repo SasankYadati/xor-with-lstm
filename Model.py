@@ -24,18 +24,17 @@ class Model(nn.Module):
         return logits, predictions
     
     def evaluate(self, test_loader, is_seq_len_varying):
-        is_correct = []
+        accuracies = []
 
         for inputs, targets in test_loader:
             lengths = getVariableLengths(inputs, targets, is_seq_len_varying)
 
             with torch.no_grad():
                 logits, predictions = self.forward(inputs, lengths)
-                is_correct.extend(((predictions > 0.5) == (targets > 0.5)))
-                # is_correct = np.append(is_correct, ((predictions > 0.5) == (targets > 0.5)))
+            accuracy = ((predictions > 0.5) == (targets > 0.5)).type(torch.FloatTensor).mean()
+            accuracies.append(accuracy)
 
-        accuracy = sum(is_correct)/len(is_correct)
-        return accuracy
+        return sum(accuracies)/len(accuracies)
 
 def train_model(model:Model, params:Params, test_loader=None, max_steps=10000, verbose=True, acc_check_points=[0.70, 0.80, 0.90, 0.95]):
     verbose and print(f"\nSeq len:{params.data.max_seq_len}, Varying seq len:{params.data.is_seq_len_varying}")
